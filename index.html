@@ -1,238 +1,249 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UOL Televisão - Display de Notícias</title>
-    <style>
-        /* Importa a fonte Poppins */
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@700&display=swap');
-
-        /* Configuração de layout de tela cheia com Flexbox */
-        body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            overflow: hidden; /* Evita barras de rolagem */
-            background-color: #333; /* Cor de fundo padrão em caso de erro */
-        }
-
-        /* Contêiner da imagem de fundo */
-        .fullscreen-bg {
-            flex: 1; /* Ocupa o espaço restante */
-            background-size: cover;
-            background-position: center;
-            position: relative;
-            /* Transição suave ao mudar a imagem */
-            transition: background-image 0.5s ease-in-out;
-            min-height: 50vh; /* Garante que tenha altura em telas pequenas */
-        }
-
-        /* Rodapé que exibe o título da notícia */
-        .footer {
-            /* NOVA COR: #7F0D14 com 90% de opacidade */
-            background-color: rgba(127, 13, 20, 0.9); 
-            color: white;
-            text-align: left;
-            padding: 20px 30px;
-            font-size: 1.5em; /* Ajuste para melhor legibilidade em diferentes telas */
-            font-family: 'Poppins', sans-serif;
-            font-weight: bold;
-            line-height: 1.2;
-            z-index: 20; /* Garante que o título da notícia sempre apareça acima */
-        }
-
-        /* Contêiner do cabeçalho (apenas CPFtv) - TOPO DIREITO (Fixo) */
-        .header-container {
-            /* Fixado no topo direito, usado para o branding da plataforma */
-            position: absolute; 
-            top: 20px;
-            right: 20px; 
-            /* NOVA COR: #7F0D14 com 70% de opacidade */
-            background-color: rgba(127, 13, 20, 0.7); 
-            padding: 5px 15px;
-            border-radius: 4px;
-            z-index: 30; /* Elevado para ficar acima de todos os outros elementos */
-        }
-
-        /* Identidade da Plataforma (CPFtv) */
-        .platform-id {
-            color: white; 
-            font-size: 1.5em; /* Destaque para o nome da plataforma */
-            font-family: 'Poppins', sans-serif;
-            font-weight: 900; /* Extra-bold */
-        }
-
-        /* Contêiner para a fonte do conteúdo (UOL) - ACIMA DO RODAPÉ */
-        .source-inline-bar {
-            width: 100%;
-            /* Fundo escuro sutil para contraste com a imagem de fundo */
-            background-color: rgba(0, 0, 0, 0.6); 
-            padding: 10px 30px; /* Padding ajustado ao do footer */
-            box-sizing: border-box;
-            z-index: 15;
-            
-            /* Alinha o conteúdo (texto e logo) à direita dentro da barra */
-            display: flex; 
-            justify-content: flex-end; 
-            align-items: center;
-        }
-        
-        /* Agrupa o texto e o logo da fonte para alinhamento */
-        .content-source {
-            display: flex;
-            align-items: center;
-            gap: 10px; /* Espaçamento entre texto e logo */
-        }
-
-        /* Texto da fonte UOL */
-        .source-text {
-            color: white; /* Cor branca para o texto no fundo escuro */
-            font-size: 1em;
-            font-family: 'Poppins', sans-serif;
-            font-weight: bold;
-        }
-
-        .content-source img {
-            max-height: 35px;
-        }
-    </style>
-</head>
-<body>
-    <!-- TOPO DIREITO: APENAS A IDENTIDADE DA PLATAFORMA (CPFtv) -->
-    <div class="header-container">
-        <div class="platform-id">CPF TV</div> 
-    </div>
- 
-    <div id="fullscreen-bg" class="fullscreen-bg"></div>
     
-    <!-- IMEDIATAMENTE ACIMA DO RODAPÉ -->
-    <div class="source-inline-bar">
-        <div class="content-source">
-            <span class="source-text">Fonte: UOL Televisão</span>
-            <img src="https://rss.kxmidia.com.br/news/imgs/uollogo.png" 
-                 alt="Logo UOL" 
-                 onerror="this.style.display='none';"
-            >
-        </div>
-    </div>
-
-    <div id="footer" class="footer">Carregando notícias...</div>
-
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Preact CDN -->
+    <script src="https://unpkg.com/preact@10/dist/preact.umd.js"></script>
+    <script src="https://unpkg.com/preact@10/hooks/dist/hooks.umd.js"></script>
+    
+    <!-- Babel Standalone para transformar JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
     <script>
-        const API_URL = "https://rss.suatv.com.br/BBC/Convert/Brasil.php";
-        const UPDATE_INTERVAL_MS = 5 * 1000; // 5 segundos
-        let currentItemIndex = 0; // Índice do item atual
-        let newsItems = []; // Array para armazenar os itens do RSS
-
-        /**
-         * Busca o feed XML e armazena os itens para rotação automática.
-         * Inclui tratamento de erros robusto.
-         */
-        async function fetchNews() {
-            try {
-                // 1. Requisição e verificação de erro HTTP
-                const response = await fetch(API_URL);
-                if (!response.ok) {
-                    throw new Error(`Erro de rede (${response.status} ${response.statusText}).`);
+        // Configura Babel para transformar JSX para Preact
+        window.Babel = window.Babel || {};
+        window.Babel.availablePlugins = window.Babel.availablePlugins || {};
+        window.Babel.availablePlugins['transform-react-jsx'] = function() {
+            return {
+                visitor: {}
+            };
+        };
+    </script>
+    
+    <!-- Google Fonts - Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <script>
+        // Configuração customizada do Tailwind
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'poppins': ['Poppins', 'sans-serif'],
+                    },
+                    colors: {
+                        'cpf-red': {
+                            500: '#7F0D14',
+                            700: 'rgba(127, 13, 20, 0.7)',
+                            900: 'rgba(127, 13, 20, 0.9)',
+                        }
+                    }
                 }
+            }
+        }
+    </script>
+</head>
+<body class="h-full m-0 p-0 overflow-hidden bg-gray-800 font-poppins">
+    <div id="root" class="h-full w-full"></div>
 
-                // 2. Decodificação (garante que caracteres especiais sejam lidos)
-                const arrayBuffer = await response.arrayBuffer();
-                const decoder = new TextDecoder('utf-8');
-                const text = decoder.decode(arrayBuffer);
-                
-                // 3. Parsing do XML
-                const parser = new DOMParser();
-                const xml = parser.parseFromString(text, 'application/xml');
-                const items = xml.querySelectorAll('item');
+    <script type="text/babel" data-plugins="transform-react-jsx" data-presets="react">
+        /** @jsx h */
+        const { h, render } = preact;
+        const { useState, useEffect, useCallback } = preactHooks;
 
-                // 4. Armazena os itens para rotação
-                if (items.length > 0) {
-                    newsItems = Array.from(items).map(item => {
-                        const titleElement = item.querySelector('title');
-                        const descriptionElement = item.querySelector('description');
-                        const imgSrcElement = item.querySelector('linkfoto');
-                        const dateElement = item.querySelector('date');
+        // Configurações
+        const CONFIG = {
+            API_URL: "https://rss.suatv.com.br/BBC/Convert/Brasil.php",
+            ROTATION_INTERVAL: 5 * 1000, // 5 segundos
+            FETCH_INTERVAL: 5 * 60 * 1000 // 5 minutos
+        };
+
+        // Hook customizado para gerenciar RSS
+        const useNewsData = () => {
+            const [newsItems, setNewsItems] = useState([]);
+            const [loading, setLoading] = useState(true);
+            const [error, setError] = useState(null);
+
+            const fetchNews = useCallback(async () => {
+                try {
+                    setLoading(true);
+                    setError(null);
+                    
+                    const response = await fetch(CONFIG.API_URL);
+                    if (!response.ok) {
+                        throw new Error(`Erro de rede (${response.status} ${response.statusText})`);
+                    }
+
+                    const arrayBuffer = await response.arrayBuffer();
+                    const decoder = new TextDecoder('utf-8');
+                    const text = decoder.decode(arrayBuffer);
+                    
+                    const parser = new DOMParser();
+                    const xml = parser.parseFromString(text, 'application/xml');
+                    const items = xml.querySelectorAll('item');
+
+                    if (items.length > 0) {
+                        const newsData = Array.from(items).map(item => {
+                            const titleElement = item.querySelector('title');
+                            const descriptionElement = item.querySelector('description');
+                            const imgSrcElement = item.querySelector('linkfoto');
+                            const dateElement = item.querySelector('date');
+                            
+                            return {
+                                title: titleElement?.textContent?.trim() || '',
+                                description: descriptionElement?.textContent?.trim() || '',
+                                image: imgSrcElement?.textContent?.trim() || '',
+                                date: dateElement?.textContent?.trim() || ''
+                            };
+                        });
                         
-                        return {
-                            title: titleElement ? titleElement.textContent.trim() : '',
-                            description: descriptionElement ? descriptionElement.textContent.trim() : '',
-                            image: imgSrcElement ? imgSrcElement.textContent.trim() : '',
-                            date: dateElement ? dateElement.textContent.trim() : ''
-                        };
-                    });
-                    
-                    console.log(`${newsItems.length} notícias carregadas do RSS`);
-                    
-                    // Exibe o primeiro item imediatamente
-                    displayCurrentItem();
-                } else {
-                    const footerElement = document.getElementById('footer');
-                    footerElement.textContent = 'Nenhuma notícia disponível no feed...';
-                    console.warn('O feed não contém notícias.');
+                        setNewsItems(newsData);
+                        console.log(`${newsData.length} notícias carregadas do RSS`);
+                    } else {
+                        throw new Error('Nenhuma notícia encontrada no feed');
+                    }
+                } catch (err) {
+                    console.error('Erro ao buscar notícias:', err);
+                    setError(err.message);
+                } finally {
+                    setLoading(false);
                 }
+            }, []);
 
-            } catch (error) {
-                // Tratamento de Erros
-                console.error('Erro ao buscar ou processar notícias:', error);
-                const footerElement = document.getElementById('footer');
-                footerElement.textContent = `Erro: ${error.message}. Tentando novamente...`;
+            useEffect(() => {
+                fetchNews();
+                const interval = setInterval(fetchNews, CONFIG.FETCH_INTERVAL);
+                return () => clearInterval(interval);
+            }, [fetchNews]);
+
+            return { newsItems, loading, error, refetch: fetchNews };
+        };
+
+        // Hook para rotação automática
+        const useAutoRotation = (items) => {
+            const [currentIndex, setCurrentIndex] = useState(0);
+
+            useEffect(() => {
+                if (items.length === 0) return;
+
+                const interval = setInterval(() => {
+                    setCurrentIndex(prevIndex => (prevIndex + 1) % items.length);
+                }, CONFIG.ROTATION_INTERVAL);
+
+                return () => clearInterval(interval);
+            }, [items.length]);
+
+            return { currentIndex, currentItem: items[currentIndex] };
+        };
+
+        // Componente Header
+        const Header = () => (
+            <div className="absolute top-5 right-5 bg-cpf-red-700 px-4 py-2 rounded z-30">
+                <div className="text-white text-2xl font-black font-poppins">CPF TV</div>
+            </div>
+        );
+
+        // Componente Background
+        const BackgroundImage = ({ imageUrl }) => {
+            const bgStyle = {
+                backgroundImage: imageUrl ? `url('${imageUrl}')` : 'none',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                transition: 'background-image 0.5s ease-in-out'
+            };
+            
+            return (
+                <div 
+                    className="flex-1 relative  bg-gray-800" 
+                    style={bgStyle}
+                />
+            );
+        };
+
+        // Componente Source Bar
+        const SourceBar = () => (
+            <div className="w-full bg-black bg-opacity-60 px-8 py-3 flex justify-end items-center z-10">
+                <div className="flex items-center gap-3">
+                    <span className="text-white text-base font-bold font-poppins">
+                        Fonte: UOL Televisão
+                    </span>
+                    <img 
+                        src="https://rss.kxmidia.com.br/news/imgs/uollogo.png" 
+                        alt="Logo UOL" 
+                        className="max-h-9"
+                        onError={(e) => e.target.style.display = 'none'}
+                    />
+                </div>
+            </div>
+        );
+
+        // Componente Footer
+        const NewsFooter = ({ title, isLoading, error }) => {
+            let content = title;
+            
+            if (isLoading) {
+                content = "Carregando notícias...";
+            } else if (error) {
+                content = `Erro: ${error}`;
+            } else if (!title) {
+                content = "Título indisponível";
             }
-        }
 
-        /**
-         * Exibe o item atual e rotaciona para o próximo
-         */
-        function displayCurrentItem() {
-            if (newsItems.length === 0) return;
-            
-            const bgElement = document.getElementById('fullscreen-bg');
-            const footerElement = document.getElementById('footer');
-            
-            const currentItem = newsItems[currentItemIndex];
-            
-            // Usa a descrição como título principal da notícia
-            const newsTitle = currentItem.description || currentItem.title || 'Título indisponível';
-            
-            // Atualiza a interface
-            footerElement.textContent = newsTitle;
-            
-            if (currentItem.image) {
-                bgElement.style.backgroundImage = `url('${currentItem.image}')`;
-            } else {
-                console.warn('Imagem não encontrada para a notícia atual.');
-            }
-            
-            console.log(`Exibindo notícia ${currentItemIndex + 1}/${newsItems.length}: ${newsTitle}`);
-            
-            // Avança para o próximo item (com loop circular)
-            currentItemIndex = (currentItemIndex + 1) % newsItems.length;
-        }
+            return (
+                <div className="bg-cpf-red-900 text-white text-left px-8 py-5 text-2xl font-bold font-poppins leading-tight z-20">
+                    {error && <span className="text-red-400">⚠️ </span>}
+                    {content}
+                </div>
+            );
+        };
 
-        /**
-         * Rotaciona automaticamente os itens a cada 5 segundos
-         */
-        function startItemRotation() {
-            setInterval(() => {
-                if (newsItems.length > 0) {
-                    displayCurrentItem();
+        // Loading Spinner Component
+        const LoadingSpinner = () => (
+            <div className="h-screen w-full flex justify-center items-center bg-gray-800">
+                <div className="text-white text-xl font-poppins animate-pulse">
+                    Carregando notícias...
+                </div>
+            </div>
+        );
+
+        // Componente principal
+        const NewsDisplay = () => {
+            const { newsItems, loading, error } = useNewsData();
+            const { currentIndex, currentItem } = useAutoRotation(newsItems);
+
+            useEffect(() => {
+                if (currentItem) {
+                    const title = currentItem.description || currentItem.title || 'Título indisponível';
+                    console.log(`Exibindo notícia ${currentIndex + 1}/${newsItems.length}: ${title}`);
                 }
-            }, UPDATE_INTERVAL_MS);
-        }
+            }, [currentIndex, currentItem, newsItems.length]);
 
-        // Inicia o sistema
-        fetchNews();
-        
-        // Rotaciona os itens a cada 5 segundos
-        startItemRotation();
-        
-        // Recarrega as notícias a cada 5 minutos (300 segundos)
-        setInterval(fetchNews, 300 * 1000); 
+            if (loading && newsItems.length === 0) {
+                return <LoadingSpinner />;
+            }
+
+            return (
+                <div className="h-full w-full flex flex-col justify-between overflow-hidden">
+                    <Header />
+                    <BackgroundImage imageUrl={currentItem?.image} />
+                    <SourceBar />
+                    <NewsFooter 
+                        title={currentItem?.description || currentItem?.title}
+                        isLoading={loading}
+                        error={error}
+                    />
+                </div>
+            );
+        };
+
+        // Renderiza a aplicação com Preact
+        render(<NewsDisplay />, document.getElementById('root'));
     </script>
 </body>
 </html>

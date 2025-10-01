@@ -1,15 +1,24 @@
 {
-  "name": "cpf-tv",
-  "version": "1.0.0",
-  "main": "index.js",
+  "name": "cpf-tv-preact",
+  "version": "3.0.0",
+  "description": "Display de notícias UOL Televisão em Preact.js",
+  "main": "index.html",
   "repository": "https://github.com/JamersonWalderson/cpf-tv.git",
   "author": "Jamerson Walderson <jamersonwalderson@gmail.com>",
   "license": "MIT",
+  "keywords": ["preact", "news", "rss", "display", "uol", "television", "lightweight"],
   "scripts": {
     "start": "http-server -p 8080",
-    "dev": "http-server -p 8080 -o"
+    "dev": "http-server -p 8080 -o",
+    "serve": "http-server -p 8080 -c-1"
   },
   "devDependencies": {
     "http-server": "^14.1.1"
+  },
+  "dependencies": {
+    "preact": "^10.19.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   }
 }
