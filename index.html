@@ -1,238 +1,259 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UOL Televisão - Display de Notícias</title>
-    <style>
-        /* Importa a fonte Poppins */
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@700&display=swap');
-
-        /* Configuração de layout de tela cheia com Flexbox */
-        body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            overflow: hidden; /* Evita barras de rolagem */
-            background-color: #333; /* Cor de fundo padrão em caso de erro */
-        }
-
-        /* Contêiner da imagem de fundo */
-        .fullscreen-bg {
-            flex: 1; /* Ocupa o espaço restante */
-            background-size: cover;
-            background-position: center;
-            position: relative;
-            /* Transição suave ao mudar a imagem */
-            transition: background-image 0.5s ease-in-out;
-            min-height: 50vh; /* Garante que tenha altura em telas pequenas */
-        }
-
-        /* Rodapé que exibe o título da notícia */
-        .footer {
-            /* NOVA COR: #7F0D14 com 90% de opacidade */
-            background-color: rgba(127, 13, 20, 0.9); 
-            color: white;
-            text-align: left;
-            padding: 20px 30px;
-            font-size: 1.5em; /* Ajuste para melhor legibilidade em diferentes telas */
-            font-family: 'Poppins', sans-serif;
-            font-weight: bold;
-            line-height: 1.2;
-            z-index: 20; /* Garante que o título da notícia sempre apareça acima */
-        }
-
-        /* Contêiner do cabeçalho (apenas CPFtv) - TOPO DIREITO (Fixo) */
-        .header-container {
-            /* Fixado no topo direito, usado para o branding da plataforma */
-            position: absolute; 
-            top: 20px;
-            right: 20px; 
-            /* NOVA COR: #7F0D14 com 70% de opacidade */
-            background-color: rgba(127, 13, 20, 0.7); 
-            padding: 5px 15px;
-            border-radius: 4px;
-            z-index: 30; /* Elevado para ficar acima de todos os outros elementos */
-        }
-
-        /* Identidade da Plataforma (CPFtv) */
-        .platform-id {
-            color: white; 
-            font-size: 1.5em; /* Destaque para o nome da plataforma */
-            font-family: 'Poppins', sans-serif;
-            font-weight: 900; /* Extra-bold */
-        }
-
-        /* Contêiner para a fonte do conteúdo (UOL) - ACIMA DO RODAPÉ */
-        .source-inline-bar {
-            width: 100%;
-            /* Fundo escuro sutil para contraste com a imagem de fundo */
-            background-color: rgba(0, 0, 0, 0.6); 
-            padding: 10px 30px; /* Padding ajustado ao do footer */
-            box-sizing: border-box;
-            z-index: 15;
-            
-            /* Alinha o conteúdo (texto e logo) à direita dentro da barra */
-            display: flex; 
-            justify-content: flex-end; 
-            align-items: center;
+    
+    <!-- Tailwind CSS Play CDN (Oficial) -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    
+    <!-- Google Fonts - Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <style type="text/tailwindcss">
+        @theme {
+            --font-family-poppins: 'Poppins', sans-serif;
+            --color-cpf-red-500: #7F0D14;
+            --color-cpf-red-700: rgba(127, 13, 20, 0.7);
+            --color-cpf-red-900: rgba(127, 13, 20, 0.9);
         }
         
-        /* Agrupa o texto e o logo da fonte para alinhamento */
-        .content-source {
-            display: flex;
-            align-items: center;
-            gap: 10px; /* Espaçamento entre texto e logo */
+        .bg-transition {
+            transition: background-image 0.5s ease-in-out;
         }
-
-        /* Texto da fonte UOL */
-        .source-text {
-            color: white; /* Cor branca para o texto no fundo escuro */
-            font-size: 1em;
-            font-family: 'Poppins', sans-serif;
-            font-weight: bold;
+        
+        .cpf-red-bg-700 {
+            background-color: rgba(127, 13, 20, 0.7);
         }
-
-        .content-source img {
-            max-height: 35px;
+        
+        .cpf-red-bg-900 {
+            background-color: rgba(127, 13, 20, 0.9);
         }
     </style>
 </head>
-<body>
+<body class="h-full m-0 p-0 overflow-hidden bg-gray-700 font-poppins flex flex-col justify-between">
     <!-- TOPO DIREITO: APENAS A IDENTIDADE DA PLATAFORMA (CPFtv) -->
-    <div class="header-container">
-        <div class="platform-id">CPF TV</div> 
+    <div class="absolute top-5 right-5 cpf-red-bg-700 px-4 py-2 rounded z-30">
+        <div class="text-white text-2xl font-black">CPF TV</div> 
     </div>
  
-    <div id="fullscreen-bg" class="fullscreen-bg"></div>
+    <div id="fullscreen-bg" class="flex-1 bg-cover bg-center relative bg-gray-800 bg-transition min-h-0"></div>
     
     <!-- IMEDIATAMENTE ACIMA DO RODAPÉ -->
-    <div class="source-inline-bar">
-        <div class="content-source">
-            <span class="source-text">Fonte: UOL Televisão</span>
+    <div class="w-full bg-black bg-opacity-60 px-8 py-3 flex justify-end items-center z-10">
+        <div class="flex items-center gap-3">
+            <span class="text-white text-base font-bold" id="sourceText"></span>
             <img src="https://rss.kxmidia.com.br/news/imgs/uollogo.png" 
                  alt="Logo UOL" 
+                 class="max-h-9"
                  onerror="this.style.display='none';"
             >
         </div>
     </div>
 
-    <div id="footer" class="footer">Carregando notícias...</div>
+    <div id="footer" class="cpf-red-bg-900 text-white text-left px-8 py-5 text-2xl font-bold leading-tight z-20">Carregando notícias...</div>
 
     <script>
-        const API_URL = "https://rss.suatv.com.br/BBC/Convert/Brasil.php";
+        const APIS = [
+            {
+                name: "BBC Brasil",
+                url: "https://rss.suatv.com.br/BBC/Convert/Brasil.php",
+                logo: "http://rss.suatv.com.br/BBC/img/logo1.png"
+            },
+            {
+                name: "UOL",
+                url: "https://rss.suatv.com.br/Uol/Convert/Economia.php",
+                logo: "http://rss.suatv.com.br/Uol/img/logo1.png"
+            },
+            {
+                name: "Veja",
+                url: "https://rss.suatv.com.br/Veja/Convert/Noticias.php",
+                logo: "http://rss.suatv.com.br/Veja/img/logo1.png"
+            }
+        ];
+        
         const UPDATE_INTERVAL_MS = 5 * 1000; // 5 segundos
+        const FETCH_INTERVAL_MS = 5 * 60 * 1000; // 5 minutos
+        
         let currentItemIndex = 0; // Índice do item atual
-        let newsItems = []; // Array para armazenar os itens do RSS
+        let newsItems = []; // Array para armazenar os itens do RSS (todas as fontes)
+        let currentSourceIndex = 0; // Índice da fonte atual
 
         /**
-         * Busca o feed XML e armazena os itens para rotação automática.
-         * Inclui tratamento de erros robusto.
+         * Busca e processa notícias de todas as fontes RSS
          */
         async function fetchNews() {
             try {
-                // 1. Requisição e verificação de erro HTTP
-                const response = await fetch(API_URL);
-                if (!response.ok) {
-                    throw new Error(`Erro de rede (${response.status} ${response.statusText}).`);
-                }
-
-                // 2. Decodificação (garante que caracteres especiais sejam lidos)
-                const arrayBuffer = await response.arrayBuffer();
-                const decoder = new TextDecoder('utf-8');
-                const text = decoder.decode(arrayBuffer);
+                console.log('Começando a buscar notícias de todas as fontes...');
                 
-                // 3. Parsing do XML
-                const parser = new DOMParser();
-                const xml = parser.parseFromString(text, 'application/xml');
-                const items = xml.querySelectorAll('item');
-
-                // 4. Armazena os itens para rotação
-                if (items.length > 0) {
-                    newsItems = Array.from(items).map(item => {
-                        const titleElement = item.querySelector('title');
-                        const descriptionElement = item.querySelector('description');
-                        const imgSrcElement = item.querySelector('linkfoto');
-                        const dateElement = item.querySelector('date');
+                // Array para guardar todas as notícias de todas as fontes
+                const todasAsNoticias = [];
+                
+                // Percorre cada fonte de notícias configurada
+                for (const fonte of APIS) {
+                    try {
+                        console.log(`Buscando notícias de: ${fonte.name}`);
                         
-                        return {
-                            title: titleElement ? titleElement.textContent.trim() : '',
-                            description: descriptionElement ? descriptionElement.textContent.trim() : '',
-                            image: imgSrcElement ? imgSrcElement.textContent.trim() : '',
-                            date: dateElement ? dateElement.textContent.trim() : ''
-                        };
-                    });
+                        // Faz a requisição para a API da fonte
+                        const response = await fetch(fonte.url);
+                        if (!response.ok) {
+                            throw new Error(`Erro HTTP ${response.status} - ${response.statusText}`);
+                        }
+
+                        // Converte resposta em texto (XML)
+                        const arrayBuffer = await response.arrayBuffer();
+                        const decoder = new TextDecoder('utf-8');
+                        const xmlText = decoder.decode(arrayBuffer);
+                        
+                        // Transforma XML em documento que podemos navegar
+                        const parser = new DOMParser();
+                        const xmlDoc = parser.parseFromString(xmlText, 'application/xml');
+                        const itemsXML = xmlDoc.querySelectorAll('item');
+
+                        // Se encontrou notícias nesta fonte, processa cada uma
+                        if (itemsXML.length > 0) {
+                            for (const item of itemsXML) {
+                                const titulo = item.querySelector('title')?.textContent?.trim() || '';
+                                const descricao = item.querySelector('description')?.textContent?.trim() || '';
+                                const imagem = item.querySelector('linkfoto')?.textContent?.trim() || '';
+                                const data = item.querySelector('date')?.textContent?.trim() || '';
+                                
+                                // Cria o objeto da notícia com info da fonte
+                                const noticia = {
+                                    title: titulo,
+                                    description: descricao,
+                                    image: imagem,
+                                    date: data,
+                                    sourceName: fonte.name,
+                                    sourceLogo: fonte.logo,
+                                    sourceUrl: fonte.url
+                                };
+                                
+                                todasAsNoticias.push(noticia);
+                            }
+                            
+                            console.log(`✅ ${itemsXML.length} notícias carregadas de ${fonte.name}`);
+                        } else {
+                            console.warn(`⚠️ Nenhuma notícia encontrada em ${fonte.name}`);
+                        }
+                        
+                    } catch (erro) {
+                        console.error(`❌ Erro ao buscar ${fonte.name}:`, erro.message);
+                        // Continua tentando as outras fontes mesmo se uma falhar
+                    }
+                }
+                
+                // Se conseguiu alguma notícia, atualiza o sistema
+                if (todasAsNoticias.length > 0) {
+                    newsItems = todasAsNoticias;
+                    currentItemIndex = 0; // Começa da primeira notícia
                     
-                    console.log(`${newsItems.length} notícias carregadas do RSS`);
+                    console.log(`🎉 Total: ${newsItems.length} notícias carregadas de ${APIS.length} fontes`);
                     
-                    // Exibe o primeiro item imediatamente
-                    displayCurrentItem();
+                    // Mostra a primeira notícia imediatamente
+                    showCurrentNews();
                 } else {
-                    const footerElement = document.getElementById('footer');
-                    footerElement.textContent = 'Nenhuma notícia disponível no feed...';
-                    console.warn('O feed não contém notícias.');
+                    // Nenhuma fonte funcionou
+                    const footerDiv = document.getElementById('footer');
+                    if (footerDiv) {
+                        footerDiv.textContent = 'Nenhuma notícia disponível no momento...';
+                    }
+                    console.warn('❌ Nenhuma notícia foi encontrada em nenhuma fonte');
                 }
 
-            } catch (error) {
-                // Tratamento de Erros
-                console.error('Erro ao buscar ou processar notícias:', error);
-                const footerElement = document.getElementById('footer');
-                footerElement.textContent = `Erro: ${error.message}. Tentando novamente...`;
+            } catch (erro) {
+                console.error('❌ Erro geral ao buscar notícias:', erro);
+                const footerDiv = document.getElementById('footer');
+                if (footerDiv) {
+                    footerDiv.textContent = `Erro: ${erro.message}. Tentando novamente...`;
+                }
             }
         }
 
+
         /**
-         * Exibe o item atual e rotaciona para o próximo
+         * Exibe uma notícia na tela - função principal de exibição
          */
-        function displayCurrentItem() {
-            if (newsItems.length === 0) return;
-            
-            const bgElement = document.getElementById('fullscreen-bg');
-            const footerElement = document.getElementById('footer');
-            
-            const currentItem = newsItems[currentItemIndex];
-            
-            // Usa a descrição como título principal da notícia
-            const newsTitle = currentItem.description || currentItem.title || 'Título indisponível';
-            
-            // Atualiza a interface
-            footerElement.textContent = newsTitle;
-            
-            if (currentItem.image) {
-                bgElement.style.backgroundImage = `url('${currentItem.image}')`;
-            } else {
-                console.warn('Imagem não encontrada para a notícia atual.');
+        function showCurrentNews() {
+            // Se não tiver notícias, não faz nada
+            if (newsItems.length === 0) {
+                console.warn('Nenhuma notícia disponível');
+                return;
             }
-            
-            console.log(`Exibindo notícia ${currentItemIndex + 1}/${newsItems.length}: ${newsTitle}`);
-            
-            // Avança para o próximo item (com loop circular)
-            currentItemIndex = (currentItemIndex + 1) % newsItems.length;
+
+            // Pega a notícia atual do array
+            const currentNews = newsItems[currentItemIndex];
+            if (!currentNews) {
+                console.error('Notícia atual não encontrada');
+                return;
+            }
+
+            // Busca os elementos da página que vamos atualizar
+            const backgroundDiv = document.getElementById('fullscreen-bg');
+            const footerDiv = document.getElementById('footer');
+            const sourceTextSpan = document.getElementById('sourceText');
+            const sourceImg = document.querySelector('.w-full.bg-black img');
+
+            // Verifica se encontrou todos os elementos
+            if (!backgroundDiv || !footerDiv || !sourceTextSpan || !sourceImg) {
+                console.error('Algum elemento da página não foi encontrado');
+                return;
+            }
+
+            // 1. Atualiza o título da notícia no rodapé
+            const newsTitle = currentNews.description || currentNews.title || 'Título indisponível';
+            footerDiv.textContent = newsTitle;
+
+            // 2. Atualiza a imagem de fundo
+            if (currentNews.image) {
+                backgroundDiv.style.backgroundImage = `url('${currentNews.image}')`;
+            } else {
+                console.warn('Imagem não encontrada para esta notícia');
+            }
+
+            // 3. Atualiza o texto da fonte
+            const sourceName = currentNews.sourceName || 'Fonte desconhecida';
+            // sourceTextSpan.textContent = `Fonte: ${sourceName}`;
+            sourceTextSpan.textContent = `Fonte: `;
+
+            // 4. Atualiza o logo da fonte
+            if (currentNews.sourceLogo) {
+                sourceImg.src = currentNews.sourceLogo;
+                sourceImg.style.display = 'block';
+            } else {
+                sourceImg.style.display = 'none';
+            }
+
+            // 5. Log para acompanhamento
+            console.log(`Mostrando notícia ${currentItemIndex + 1}/${newsItems.length} de ${sourceName}: ${newsTitle}`);
+
+            // 6. Avança para a próxima notícia (volta para primeira quando chegar no final)
+            currentItemIndex++;
+            if (currentItemIndex >= newsItems.length) {
+                currentItemIndex = 0; // Volta para primeira notícia
+            }
         }
 
         /**
-         * Rotaciona automaticamente os itens a cada 5 segundos
+         * Inicia a rotação automática das notícias
          */
         function startItemRotation() {
             setInterval(() => {
-                if (newsItems.length > 0) {
-                    displayCurrentItem();
-                }
+                showCurrentNews(); // Muda para próxima notícia a cada 5 segundos
             }, UPDATE_INTERVAL_MS);
         }
 
-        // Inicia o sistema
+        // === INICIALIZAÇÃO DO SISTEMA ===
+        
+        // Busca as notícias pela primeira vez
         fetchNews();
         
-        // Rotaciona os itens a cada 5 segundos
+        // Inicia a rotação automática a cada 5 segundos  
         startItemRotation();
         
-        // Recarrega as notícias a cada 5 minutos (300 segundos)
-        setInterval(fetchNews, 300 * 1000); 
+        // Recarrega todas as notícias a cada 5 minutos
+        setInterval(fetchNews, FETCH_INTERVAL_MS); 
     </script>
 </body>
 </html>
