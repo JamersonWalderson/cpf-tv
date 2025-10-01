@@ -73,8 +73,8 @@
             }
         ];
         
-        const UPDATE_INTERVAL_MS = 5 * 1000; // 5 segundos
-        const FETCH_INTERVAL_MS = 5 * 60 * 1000; // 5 minutos
+        const UPDATE_INTERVAL_MS = 25 * 1000; // 5 segundos
+        const FETCH_INTERVAL_MS = 10 * 60 * 1000; // 10 minutos
         
         let currentItemIndex = 0; // Índice do item atual
         let newsItems = []; // Array para armazenar os itens do RSS (todas as fontes)
@@ -214,7 +214,7 @@
 
             // 3. Atualiza o texto da fonte
             const sourceName = currentNews.sourceName || 'Fonte desconhecida';
-            // sourceTextSpan.textContent = `Fonte: ${sourceName}`;
+            // sourceTextSpan.textContent = `Fonte: ${sourceName}`; 
             sourceTextSpan.textContent = `Fonte: `;
 
             // 4. Atualiza o logo da fonte
