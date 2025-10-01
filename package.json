@@ -1,0 +1,15 @@
+{
+  "name": "cpf-tv",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/JamersonWalderson/cpf-tv.git",
+  "author": "Jamerson Walderson <jamersonwalderson@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "start": "http-server -p 8080",
+    "dev": "http-server -p 8080 -o"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}

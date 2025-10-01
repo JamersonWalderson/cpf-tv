@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UOL Televisão - Display de Notícias</title>
+    <style>
+        /* Importa a fonte Poppins */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@700&display=swap');
+
+        /* Configuração de layout de tela cheia com Flexbox */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow: hidden; /* Evita barras de rolagem */
+            background-color: #333; /* Cor de fundo padrão em caso de erro */
+        }
+
+        /* Contêiner da imagem de fundo */
+        .fullscreen-bg {
+            flex: 1; /* Ocupa o espaço restante */
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            /* Transição suave ao mudar a imagem */
+            transition: background-image 0.5s ease-in-out;
+            min-height: 50vh; /* Garante que tenha altura em telas pequenas */
+        }
+
+        /* Rodapé que exibe o título da notícia */
+        .footer {
+            /* NOVA COR: #7F0D14 com 90% de opacidade */
+            background-color: rgba(127, 13, 20, 0.9); 
+            color: white;
+            text-align: left;
+            padding: 20px 30px;
+            font-size: 1.5em; /* Ajuste para melhor legibilidade em diferentes telas */
+            font-family: 'Poppins', sans-serif;
+            font-weight: bold;
+            line-height: 1.2;
+            z-index: 20; /* Garante que o título da notícia sempre apareça acima */
+        }
+
+        /* Contêiner do cabeçalho (apenas CPFtv) - TOPO DIREITO (Fixo) */
+        .header-container {
+            /* Fixado no topo direito, usado para o branding da plataforma */
+            position: absolute; 
+            top: 20px;
+            right: 20px; 
+            /* NOVA COR: #7F0D14 com 70% de opacidade */
+            background-color: rgba(127, 13, 20, 0.7); 
+            padding: 5px 15px;
+            border-radius: 4px;
+            z-index: 30; /* Elevado para ficar acima de todos os outros elementos */
+        }
+
+        /* Identidade da Plataforma (CPFtv) */
+        .platform-id {
+            color: white; 
+            font-size: 1.5em; /* Destaque para o nome da plataforma */
+            font-family: 'Poppins', sans-serif;
+            font-weight: 900; /* Extra-bold */
+        }
+
+        /* Contêiner para a fonte do conteúdo (UOL) - ACIMA DO RODAPÉ */
+        .source-inline-bar {
+            width: 100%;
+            /* Fundo escuro sutil para contraste com a imagem de fundo */
+            background-color: rgba(0, 0, 0, 0.6); 
+            padding: 10px 30px; /* Padding ajustado ao do footer */
+            box-sizing: border-box;
+            z-index: 15;
+            
+            /* Alinha o conteúdo (texto e logo) à direita dentro da barra */
+            display: flex; 
+            justify-content: flex-end; 
+            align-items: center;
+        }
+        
+        /* Agrupa o texto e o logo da fonte para alinhamento */
+        .content-source {
+            display: flex;
+            align-items: center;
+            gap: 10px; /* Espaçamento entre texto e logo */
+        }
+
+        /* Texto da fonte UOL */
+        .source-text {
+            color: white; /* Cor branca para o texto no fundo escuro */
+            font-size: 1em;
+            font-family: 'Poppins', sans-serif;
+            font-weight: bold;
+        }
+
+        .content-source img {
+            max-height: 35px;
+        }
+    </style>
+</head>
+<body>
+    <!-- TOPO DIREITO: APENAS A IDENTIDADE DA PLATAFORMA (CPFtv) -->
+    <div class="header-container">
+        <div class="platform-id">CPF TV</div> 
+    </div>
+ 
+    <div id="fullscreen-bg" class="fullscreen-bg"></div>
+    
+    <!-- IMEDIATAMENTE ACIMA DO RODAPÉ -->
+    <div class="source-inline-bar">
+        <div class="content-source">
+            <span class="source-text">Fonte: UOL Televisão</span>
+            <img src="https://rss.kxmidia.com.br/news/imgs/uollogo.png" 
+                 alt="Logo UOL" 
+                 onerror="this.style.display='none';"
+            >
+        </div>
+    </div>
+
+    <div id="footer" class="footer">Carregando notícias...</div>
+
+    <script>
+        const API_URL = "https://rss.suatv.com.br/Uol/Convert/Televisao.php";
+        const UPDATE_INTERVAL_MS = 25 * 1000; // 25 segundos (5 * 5 * 1000)
+
+        /**
+         * Busca o feed XML, analisa o segundo item (índice 1) e atualiza a UI.
+         * Inclui tratamento de erros robusto.
+         */
+        async function fetchNews() {
+            const bgElement = document.getElementById('fullscreen-bg');
+            const footerElement = document.getElementById('footer');
+            
+            try {
+                // 1. Requisição e verificação de erro HTTP
+                const response = await fetch(API_URL);
+                if (!response.ok) {
+                    throw new Error(`Erro de rede (${response.status} ${response.statusText}).`);
+                }
+
+                // 2. Decodificação (garante que caracteres especiais sejam lidos)
+                const arrayBuffer = await response.arrayBuffer();
+                const decoder = new TextDecoder('utf-8');
+                const text = decoder.decode(arrayBuffer);
+                
+                // 3. Parsing do XML
+                const parser = new DOMParser();
+                const xml = parser.parseFromString(text, 'application/xml');
+                const items = xml.querySelectorAll('item');
+
+                // 4. Processa o segundo item (índice 1)
+                if (items.length > 1) {
+                    const secondItem = items[1]; 
+                    
+                    // Busca os elementos 'description' (título) e 'linkfoto' (imagem)
+                    const titleElement = secondItem.querySelector('description');
+                    const imgSrcElement = secondItem.querySelector('linkfoto');
+                    
+                    // Extrai o conteúdo com checagem para evitar erros de null
+                    const title = titleElement ? titleElement.textContent : 'Título da notícia indisponível';
+                    const imgSrc = imgSrcElement ? imgSrcElement.textContent : '';
+
+                    // 5. Atualiza a Interface
+                    footerElement.textContent = title;
+                    
+                    if (imgSrc) {
+                        bgElement.style.backgroundImage = `url('${imgSrc}')`;
+                    } else {
+                        console.warn('Imagem não encontrada para a notícia. O fundo permanecerá o anterior ou o padrão.');
+                    }
+                    
+                } else {
+                    footerElement.textContent = 'Aguardando mais notícias no feed...';
+                    console.warn('O feed não contém notícias suficientes (precisa de pelo menos 2 itens).');
+                }
+
+            } catch (error) {
+                // 6. Tratamento de Erros: Atualiza o rodapé com a mensagem de erro.
+                console.error('Erro ao buscar ou processar notícias:', error);
+                footerElement.textContent = `Erro: ${error.message}. Tentando novamente em ${UPDATE_INTERVAL_MS / 1000} segundos...`;
+            }
+        }
+
+        // Inicia o carregamento e configura o loop de atualização
+        fetchNews();
+        // O comentário agora reflete o valor de 25 segundos corretamente
+        setInterval(fetchNews, UPDATE_INTERVAL_MS); 
+    </script>
+</body>
+</html>
