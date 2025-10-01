@@ -124,17 +124,16 @@
     <div id="footer" class="footer">Carregando notícias...</div>
 
     <script>
-        const API_URL = "https://rss.suatv.com.br/Uol/Convert/Televisao.php";
-        const UPDATE_INTERVAL_MS = 25 * 1000; // 25 segundos (5 * 5 * 1000)
+        const API_URL = "https://rss.suatv.com.br/BBC/Convert/Brasil.php";
+        const UPDATE_INTERVAL_MS = 5 * 1000; // 5 segundos
+        let currentItemIndex = 0; // Índice do item atual
+        let newsItems = []; // Array para armazenar os itens do RSS
 
         /**
-         * Busca o feed XML, analisa o segundo item (índice 1) e atualiza a UI.
+         * Busca o feed XML e armazena os itens para rotação automática.
          * Inclui tratamento de erros robusto.
          */
         async function fetchNews() {
-            const bgElement = document.getElementById('fullscreen-bg');
-            const footerElement = document.getElementById('footer');
-            
             try {
                 // 1. Requisição e verificação de erro HTTP
                 const response = await fetch(API_URL);
@@ -152,43 +151,88 @@
                 const xml = parser.parseFromString(text, 'application/xml');
                 const items = xml.querySelectorAll('item');
 
-                // 4. Processa o segundo item (índice 1)
-                if (items.length > 1) {
-                    const secondItem = items[1]; 
+                // 4. Armazena os itens para rotação
+                if (items.length > 0) {
+                    newsItems = Array.from(items).map(item => {
+                        const titleElement = item.querySelector('title');
+                        const descriptionElement = item.querySelector('description');
+                        const imgSrcElement = item.querySelector('linkfoto');
+                        const dateElement = item.querySelector('date');
+                        
+                        return {
+                            title: titleElement ? titleElement.textContent.trim() : '',
+                            description: descriptionElement ? descriptionElement.textContent.trim() : '',
+                            image: imgSrcElement ? imgSrcElement.textContent.trim() : '',
+                            date: dateElement ? dateElement.textContent.trim() : ''
+                        };
+                    });
                     
-                    // Busca os elementos 'description' (título) e 'linkfoto' (imagem)
-                    const titleElement = secondItem.querySelector('description');
-                    const imgSrcElement = secondItem.querySelector('linkfoto');
+                    console.log(`${newsItems.length} notícias carregadas do RSS`);
                     
-                    // Extrai o conteúdo com checagem para evitar erros de null
-                    const title = titleElement ? titleElement.textContent : 'Título da notícia indisponível';
-                    const imgSrc = imgSrcElement ? imgSrcElement.textContent : '';
-
-                    // 5. Atualiza a Interface
-                    footerElement.textContent = title;
-                    
-                    if (imgSrc) {
-                        bgElement.style.backgroundImage = `url('${imgSrc}')`;
-                    } else {
-                        console.warn('Imagem não encontrada para a notícia. O fundo permanecerá o anterior ou o padrão.');
-                    }
-                    
+                    // Exibe o primeiro item imediatamente
+                    displayCurrentItem();
                 } else {
-                    footerElement.textContent = 'Aguardando mais notícias no feed...';
-                    console.warn('O feed não contém notícias suficientes (precisa de pelo menos 2 itens).');
+                    const footerElement = document.getElementById('footer');
+                    footerElement.textContent = 'Nenhuma notícia disponível no feed...';
+                    console.warn('O feed não contém notícias.');
                 }
 
             } catch (error) {
-                // 6. Tratamento de Erros: Atualiza o rodapé com a mensagem de erro.
+                // Tratamento de Erros
                 console.error('Erro ao buscar ou processar notícias:', error);
-                footerElement.textContent = `Erro: ${error.message}. Tentando novamente em ${UPDATE_INTERVAL_MS / 1000} segundos...`;
+                const footerElement = document.getElementById('footer');
+                footerElement.textContent = `Erro: ${error.message}. Tentando novamente...`;
             }
         }
 
-        // Inicia o carregamento e configura o loop de atualização
+        /**
+         * Exibe o item atual e rotaciona para o próximo
+         */
+        function displayCurrentItem() {
+            if (newsItems.length === 0) return;
+            
+            const bgElement = document.getElementById('fullscreen-bg');
+            const footerElement = document.getElementById('footer');
+            
+            const currentItem = newsItems[currentItemIndex];
+            
+            // Usa a descrição como título principal da notícia
+            const newsTitle = currentItem.description || currentItem.title || 'Título indisponível';
+            
+            // Atualiza a interface
+            footerElement.textContent = newsTitle;
+            
+            if (currentItem.image) {
+                bgElement.style.backgroundImage = `url('${currentItem.image}')`;
+            } else {
+                console.warn('Imagem não encontrada para a notícia atual.');
+            }
+            
+            console.log(`Exibindo notícia ${currentItemIndex + 1}/${newsItems.length}: ${newsTitle}`);
+            
+            // Avança para o próximo item (com loop circular)
+            currentItemIndex = (currentItemIndex + 1) % newsItems.length;
+        }
+
+        /**
+         * Rotaciona automaticamente os itens a cada 5 segundos
+         */
+        function startItemRotation() {
+            setInterval(() => {
+                if (newsItems.length > 0) {
+                    displayCurrentItem();
+                }
+            }, UPDATE_INTERVAL_MS);
+        }
+
+        // Inicia o sistema
         fetchNews();
-        // O comentário agora reflete o valor de 25 segundos corretamente
-        setInterval(fetchNews, UPDATE_INTERVAL_MS); 
+        
+        // Rotaciona os itens a cada 5 segundos
+        startItemRotation();
+        
+        // Recarrega as notícias a cada 5 minutos (300 segundos)
+        setInterval(fetchNews, 300 * 1000); 
     </script>
 </body>
 </html>
