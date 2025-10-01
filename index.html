@@ -41,7 +41,14 @@
     <div id="fullscreen-bg" class="flex-1 bg-cover bg-center relative bg-gray-800 bg-transition min-h-0"></div>
     
     <!-- IMEDIATAMENTE ACIMA DO RODAPÉ -->
-    <div class="w-full bg-black bg-opacity-60 px-8 py-3 flex justify-end items-center z-10">
+    <div class="w-full bg-black bg-opacity-60 px-8 py-3 flex justify-between items-center z-10">
+        <!-- Informações do Clima - Lado Esquerdo -->
+        <div class="flex items-center gap-4">
+            <span class="text-white text-base font-bold" id="weatherInfo">Carregando clima...</span>
+            <span class="text-white text-sm opacity-75" id="weatherTime"></span>
+        </div>
+        
+        <!-- Informações da Fonte - Lado Direito -->
         <div class="flex items-center gap-3">
             <span class="text-white text-base font-bold" id="sourceText"></span>
             <img src="https://rss.kxmidia.com.br/news/imgs/uollogo.png" 
@@ -57,11 +64,6 @@
     <script>
         const APIS = [
             {
-                name: "BBC Brasil",
-                url: "https://rss.suatv.com.br/BBC/Convert/Brasil.php",
-                logo: "http://rss.suatv.com.br/BBC/img/logo1.png"
-            },
-            {
                 name: "UOL",
                 url: "https://rss.suatv.com.br/Uol/Convert/Economia.php",
                 logo: "http://rss.suatv.com.br/Uol/img/logo1.png"
@@ -70,11 +72,21 @@
                 name: "Veja",
                 url: "https://rss.suatv.com.br/Veja/Convert/Noticias.php",
                 logo: "http://rss.suatv.com.br/Veja/img/logo1.png"
-            }
+            },
+            {
+                name: "BBC Brasil",
+                url: "https://rss.suatv.com.br/BBC/Convert/Brasil.php",
+                logo: "http://rss.suatv.com.br/BBC/img/logo1.png"
+            },
+            
         ];
         
-        const UPDATE_INTERVAL_MS = 25 * 1000; // 5 segundos
+        const UPDATE_INTERVAL_MS = 25 * 1000; // 15 segundos
         const FETCH_INTERVAL_MS = 10 * 60 * 1000; // 10 minutos
+        
+        // Configurações da API de clima
+        const API_KEY = '89c0297e8329dad813ff5a905d14544e'; // Chave OpenWeather
+        const CITY = 'Maceió,BR';
         
         let currentItemIndex = 0; // Índice do item atual
         let newsItems = []; // Array para armazenar os itens do RSS (todas as fontes)
@@ -171,12 +183,65 @@
             }
         }
 
+        /**
+         * Busca informações do clima atual em Maceió
+         */
+        async function fetchWeather() {
+            try {
+                console.log('Buscando informações do clima...');
+                
+                // Faz requisição para API do OpenWeatherMap
+                const response = await fetch(
+                    `https://api.openweathermap.org/data/2.5/weather?q=${CITY}&appid=${API_KEY}&units=metric&lang=pt_br`
+                );
+                
+                if (!response.ok) {
+                    throw new Error(`Erro na API de clima: ${response.status}`);
+                }
+                
+                const climaData = await response.json();
+                
+                // Pega os elementos da página onde vamos mostrar o clima
+                const weatherInfoSpan = document.getElementById('weatherInfo');
+                const weatherTimeSpan = document.getElementById('weatherTime');
+                
+                if (weatherInfoSpan && weatherTimeSpan) {
+                    // Extrai informações do clima
+                    const temperatura = Math.round(climaData.main.temp);
+                    const descricao = climaData.weather[0].description;
+                    const cidade = climaData.name;
+                    const sensacao = Math.round(climaData.main.feels_like);
+                    const umidade = climaData.main.humidity;
+                    
+                    // Atualiza as informações na tela
+                    weatherInfoSpan.textContent = `${cidade}: ${temperatura}°C, ${descricao}`;
+                    weatherTimeSpan.textContent = `Sensação ${sensacao}°C • Umidade ${umidade}%`;
+                    
+                    console.log(`✅ Clima atualizado: ${temperatura}°C em ${cidade}`);
+                } else {
+                    console.error('Elementos do clima não encontrados na página');
+                }
+                
+            } catch (erro) {
+                console.error('❌ Erro ao buscar clima:', erro.message);
+                
+                // Mostra erro na tela se algo deu errado
+                const weatherInfoSpan = document.getElementById('weatherInfo');
+                const weatherTimeSpan = document.getElementById('weatherTime');
+                
+                if (weatherInfoSpan) {
+                    weatherInfoSpan.textContent = 'Erro ao carregar clima';
+                }
+                if (weatherTimeSpan) {
+                    weatherTimeSpan.textContent = '';
+                }
+            }
+        }
 
         /**
          * Exibe uma notícia na tela - função principal de exibição
          */
         function showCurrentNews() {
-            // Se não tiver notícias, não faz nada
             if (newsItems.length === 0) {
                 console.warn('Nenhuma notícia disponível');
                 return;
@@ -214,7 +279,7 @@
 
             // 3. Atualiza o texto da fonte
             const sourceName = currentNews.sourceName || 'Fonte desconhecida';
-            // sourceTextSpan.textContent = `Fonte: ${sourceName}`; 
+            // sourceTextSpan.textContent = `Fonte: ${sourceName}`;
             sourceTextSpan.textContent = `Fonte: `;
 
             // 4. Atualiza o logo da fonte
@@ -249,11 +314,17 @@
         // Busca as notícias pela primeira vez
         fetchNews();
         
-        // Inicia a rotação automática a cada 5 segundos  
+        // Busca informações do clima pela primeira vez
+        fetchWeather();
+        
+        // Inicia a rotação automática a cada 25 segundos  
         startItemRotation();
         
-        // Recarrega todas as notícias a cada 5 minutos
-        setInterval(fetchNews, FETCH_INTERVAL_MS); 
+        // Recarrega todas as notícias a cada 10 minutos
+        setInterval(fetchNews, FETCH_INTERVAL_MS);
+        
+        // Atualiza o clima a cada 30 minutos (clima não muda tanto)
+        setInterval(fetchWeather, 30 * 60 * 1000); 
     </script>
 </body>
 </html>
